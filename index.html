@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пробний НМТ з української мови</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #1E3A8A;
+            --primary-hover: #172554;
+            --bg: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --border: #E5E7EB;
+            --text-main: #1F2937;
+            --text-muted: #4B5563;
+            
+            --tag-bg: #F9FAFB;
+            --tag-border: #E5E7EB;
+            --warning-bg: #FEFCE8;
+            --warning-border: #FDE047;
+            --warning-text: #854D0E;
+            
+            --answered: #1E3A8A;
+            --skipped: #EAB308;
+            --correct: #10B981;
+            --incorrect: #EF4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px 10px;
+        }
+
+        .main-wrapper {
+            max-width: 960px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* HEADER */
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin: 0 0 4px 0;
+        }
+
+        .header-sub {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin: 2px 0;
+        }
+
+        .stats-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+        }
+
+        .stat-badge.timer-badge { color: #DC2626; background: #FEF2F2; border-color: #FCA5A5; }
+        .stat-badge.warning-badge { color: #C2410C; background: #FFF7ED; border-color: #FFEDD5; }
+
+        /* RULES BOX */
+        .rules-box {
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            color: var(--warning-text);
+            font-size: 14px;
+        }
+
+        .rules-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rules-list {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .rules-list li {
+            margin-bottom: 4px;
+        }
+
+        .rules-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        /* NAV GRID */
+        .nav-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .nav-legend {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+            gap: 6px;
+        }
+
+        .nav-btn {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #FFFFFF;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.15s ease;
+        }
+
+        .nav-btn.answered { background: var(--answered); color: #FFFFFF; border-color: var(--answered); }
+        .nav-btn.skipped { background: var(--skipped); color: #FFFFFF; border-color: var(--skipped); }
+
+        /* QUESTIONS */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+        }
+
+        .question-item {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            scroll-margin-top: 20px;
+        }
+
+        .question-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 0;
+        }
+
+        .q-prompt {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 14px;
+            white-space: pre-line;
+        }
+
+        .options-list { list-style: none; padding: 0; margin: 0; }
+        .option-item { margin-bottom: 8px; }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.15s;
+        }
+
+        .option-label:hover { background: #F9FAFB; }
+        .option-label input { margin-right: 12px; }
+
+        .matching-grid { display: grid; gap: 8px; margin-top: 10px; }
+        .matching-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F9FAFB;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            gap: 10px;
+        }
+
+        .matching-row select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #FFF;
+            font-size: 13px;
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 12px;
+            padding: 12px;
+            background: #F0FDF4;
+            border-left: 4px solid #10B981;
+            border-radius: 4px;
+            font-size: 13px;
+            white-space: pre-line;
+            color: #065F46;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            background-color: var(--primary);
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-secondary {
+            background-color: #6B7280;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover { background-color: #4B5563; }
+
+        .btn-success {
+            background-color: #059669;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+            margin-top: 10px;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-success:hover { background-color: #047857; }
+
+        .btn-finish {
+            background-color: #065F46;
+            color: #FFF;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .btn-finish:hover { background-color: #047857; }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 15px;
+        }
+
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: 16px;
+            max-width: 520px;
+            width: 100%;
+            padding: 32px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .modal-card h2 {
+            font-size: 24px;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-weight: 800;
+        }
+
+        .modal-card p {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 15px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+        }
+
+        /* RESULT GRID */
+        .results-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .res-card {
+            background: #F9FAFB;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .res-val {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .res-lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .correct-answer-highlight {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-color: var(--correct) !important;
+        }
+
+        .incorrect-answer-highlight {
+            background-color: rgba(239, 68, 68, 0.15) !important;
+            border-color: var(--incorrect) !important;
+        }
+
+        .hidden { display: none !important; }
+
+        .wavy-underline {
+            text-decoration: underline wavy red;
+            text-underline-offset: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-wrapper">
+
+    <!-- START MODAL -->
+    <div id="start-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2>Вітаємо на тестуванні!</h2>
+            <p>Введіть ваше ім'я та прізвище для початку Пробного НМТ з української мови.</p>
+            
+            <div class="rules-box" style="text-align: left;">
+                <div class="rules-title">⚠️ Увага! Важливі правила проходження тесту:</div>
+                <ul class="rules-list">
+                    <li>На виконання тесту відведено 60 хвилин.</li>
+                    <li>У системі працює трекер відволікань. Перемикання вкладок, згортання браузера або перехід в інші вікна буде зафіксовано в підсумковому результаті.</li>
+                    <li>Ви можете пропускати питання та повертатися до них у будь-який момент за допомогою навігаційної панелі.</li>
+                    <li>В кінці цієї частини тесту вас чекатиме наступна.</li>
+                </ul>
+            </div>
+
+            <input type="text" id="student-name" class="input-field" placeholder="Введіть ПІБ учня..." required>
+            <button class="btn-primary" onclick="startQuiz()">Розпочати тест</button>
+        </div>
+    </div>
+
+    <!-- HEADER BLOCK -->
+    <div class="card-box header-box">
+        <div>
+            <h1 class="header-title">Пробний НМТ з української мови</h1>
+            <div class="header-sub">Учень: <strong id="user-display-name">—</strong></div>
+            <div class="header-sub">Блок 1 з 1</div>
+        </div>
+        <div class="stats-group">
+            <div class="stat-badge timer-badge" id="timer">60:00</div>
+            <div class="stat-badge warning-badge" id="warning-display">Виходів із вкладки: 0</div>
+            <div class="stat-badge" id="score-badge">Тестовий бал: - / 45</div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION GRID -->
+    <div class="card-box">
+        <div class="nav-header">
+            <span>Навігація по запитаннях (1-30)</span>
+            <span class="nav-legend">Синій: Дано відповідь | Жовтий: Пропущено</span>
+        </div>
+        <div class="nav-grid" id="nav-grid"></div>
+    </div>
+
+    <!-- QUESTIONS CONTAINER -->
+    <div id="quiz-content" class="card-box hidden">
+        <div class="section-title">Частина 1: Завдання з мовних тем</div>
+
+        <div class="rules-box">
+            <div class="rules-title">⚠️ Увага! Важливі правила проходження тесту:</div>
+            <ul class="rules-list">
+                <li>На виконання тесту відведено 60 хвилин.</li>
+                <li>У системі працює трекер відволікань. Перемикання вкладок, згортання браузера або перехід в інші вікна буде зафіксовано в підсумковому результаті.</li>
+                <li>Ви можете пропускати питання та повертатися до них у будь-який момент за допомогою навігаційної панелі.</li>
+                <li>В кінці цієї частини тесту вас чекатиме наступна.</li>
+            </ul>
+        </div>
+
+        <form id="quiz-form">
+            <div id="questions-container"></div>
+            <div style="text-align: right; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px;">
+                <button type="button" class="btn-finish" onclick="finishQuiz()">Завершити тест</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="card-box hidden" style="text-align: center;">
+        <h2 style="color: var(--primary); font-size: 24px; margin-top: 0;">Тестування завершено!</h2>
+        <p style="color: var(--text-muted); font-size: 14px;">Ваші підсумкові результати пробного НМТ з української мови:</p>
+        
+        <div class="results-summary-grid">
+            <div class="res-card">
+                <div class="res-val" id="res-raw">0 / 45</div>
+                <div class="res-lbl">Тестовий бал</div>
+            </div>
+            <div class="res-card">
+                <div class="res-val" id="res-scaled">100</div>
+                <div class="res-lbl">Рейтинговий бал (100–200)</div>
+            </div>
+            <div class="res-card">
+                <div class="res-val" id="res-distractions" style="color: #C2410C;">0</div>
+                <div class="res-lbl">Виходів із вкладки</div>
+            </div>
+        </div>
+
+        <div style="max-width: 320px; margin: 10px auto 30px auto; display: flex; flex-direction: column; gap: 10px;">
+            <button class="btn-primary" onclick="downloadPDF()">Завантажити PDF із результатами</button>
+            <a href="https://olena-exam-expert.github.io/NMT-maths/" class="btn-success">Перейти до наступної частини тестування</a>
+        </div>
+
+        <div style="text-align: left; border-top: 1px solid var(--border); padding-top: 20px;">
+            <h3 style="color: var(--primary); font-size: 18px;">Детальний аналіз відповідей:</h3>
+            <div id="review-container"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const microText = "◇ Проте, справжня дисципліна формується тоді, коли ви продовжуєте працювати навіть після згасання першого пориву.\n△ Тому не варто покладатися лише на тимчасовий приплив сил, очевидно, краще завчасно побудувати чітку систему щоденних дій.\n○ Існує думка, що для досягнення мети потрібне лише натхнення, яке здатне миттєво вирішити будь-які складні завдання.\n□ Великі здобутки народжуються завдяки систематичній праці, оскільки вона дозволяє рухатися вперед щодня.\n▽ Воно дійсно дає потужний імпульс на самому початку шляху та забарвлює процес яскравими емоціями.";
+
+const quizData = [
+    {
+        id: 1, type: 'single',
+        prompt: '1. Однаковий звук позначають букви, виділені в кожному слові рядка:',
+        options: [
+            'А сміє<b>т</b>ься, фу<b>т</b>бол, <b>д</b>ерево',
+            'Б поду<b>ш</b>ці, <b>с</b>ьогодні, <b>с</b>іно',
+            'В бд<b>ж</b>ола, <b>ж</b>ито, триво<b>ж</b>ся',
+            'Г дру<b>з</b>і, <b>з</b>ірка, <b>з</b>ерно'
+        ],
+        answer: 1,
+        exp: "Фонетика. Усі виділені букви в рядку Б позначають м'який звук [с']:\nподушці — через уподібнення буквосполучення «шц» вимовляється як [с'ц'] ([поду́с'ц'і]);\nсьогодні — буква с перед ьо позначає м'який [с'] ([с'ого́дн'і]);\nсіно — буква с перед і позначає м'який [с'] ([с'і́но])."
+    },
+    {
+        id: 2, type: 'single',
+        prompt: '2. Правильно виділено букви на позначення наголошених голосних у всіх словах:',
+        options: ['А вантажІвка, рАзом, данИна', 'Б гуртожИток, добУток, довіднИк', 'В зАпонка, заробІток, зручнИй', 'Г кОрисний, кулінарІя, катАлог'],
+        answer: 0,
+        exp: "Наголос. Зайві слова в інших варіантах: гуртОжиток, зрУчний, кулінАрія."
+    },
+    {
+        id: 3, type: 'single',
+        prompt: '3. Префікс з- треба писати на місці пропуску в усіх словах рядка:',
+        options: ['А ..питати, ..казати, ..різати', 'Б ..робити, ..фотографувати, ..хотіти', 'В ..чистити, ..молотити, ..цідити', 'Г ..майструвати, ..мити, ..ховати'],
+        answer: 2,
+        exp: "Орфографія. Написання префіксів. Префікс с- пишеться лише перед 5 буквами К, П, Т, Ф, Х («Кафе \"Птах\"»).\nУ рядку В перед ч, м, ц (які не входять до правила) пишеться саме префікс з-: зчистити, змолотити, зцідити."
+    },
+    {
+        id: 4, type: 'single',
+        prompt: '4. Апостроф треба писати на місці пропуску в усіх словах рядка:',
+        options: ['А Мін..юст, Св..ятослав, В..ячеслав', 'Б дит..ясла, горохв..яний, моркв..яний', 'В верб..я, бур..ян, кав..ярня', 'Г кур..йозний, від..єднати, торф..яний'],
+        answer: 2,
+        exp: "Орфографія. Написання апострофа. Апостроф пишеться після б, п, v, м, ф перед я, ю, є, ї."
+    },
+    {
+        id: 5, type: 'single',
+        prompt: '5. РАЗОМ треба писати всі складні іменники в рядку:',
+        options: ['А сон/трава, люби/мене, п’яти/річчя', 'Б угро/фіни, бета/промені, віце/прем’єр', 'В топ/модель, екс/посадовець, перекоти/поле', 'Г норд/вест, макро/економіка, чорно/зем'],
+        answer: 2,
+        exp: "Не підходить: сон-трава, люби-мене, угро-фіни, бета-промені, норд-вест."
+    },
+    {
+        id: 6, type: 'single',
+        prompt: '6. Лексична помилка є у варіанті:',
+        options: ['А розгорнути підручник', 'Б зумовлювати успіх', 'В переказувати кошти', 'Г переводити з хорватської'],
+        answer: 3,
+        exp: "Правильно: перекладати з хорватської."
+    },
+    {
+        id: 7, type: 'single',
+        prompt: '7. Українським відповідником до іншомовного слова ГЕНЕАЛОГІЯ є:',
+        options: ['А родовід', 'Б злагода', 'В припущення', 'Г перебільшення'],
+        answer: 0,
+        exp: "Генеалогія — це історія роду, родовід. Тому українським відповідником є слово родовід."
+    },
+    {
+        id: 8, type: 'single',
+        prompt: '8. Правил вживання великої літера (та/або лапок) дотримано в реченні:',
+        options: [
+            'А День Незалежності України відзначають 24 серпня.',
+            'Б Київський Національний университет імені Тараса Шевченка розташований у центрі столиці.',
+            'В На уроці ми читали Лісову Пісню Лесі Українки.',
+            'Г Він працює в міністерстві освіти і науки України.'
+        ],
+        answer: 0,
+        exp: "А — правильно (День Незалежності України — з великої пишеться перше слово свята та власна назва країни).\nБ — помилка: слово «національний» має бути з малої літери.\nВ — помилка: назву твору треба брати в лапки («Лісову пісню»).\nГ — помилка: власні назви міністерств пишуться з великої літери (Міністерство освіти і науки України)."
+    },
+    {
+        id: 9, type: 'single',
+        prompt: '9. Подвоєні букви треба писати на місці пропуску у всіх словах рядка:',
+        options: [
+            'А закон..ий, довгождан..ий, шален..ий',
+            'Б розріс..я, священ..ий, туман..ий',
+            'В незрівнян..ий, тряс..я, скажен..ий',
+            'Г довгождан..ий, без..вучний, божествен..ий'
+        ],
+        answer: 1,
+        exp: "А — законний, довгожданий (виняток), шалений (одна н).\nБ — розрісся (збіг с+с), священний (прикметник із наголошеним суфіксом -енн-), туманний (збіг н+н).\nВ — незрівнянний, трясся, скажений (одна н).\nГ — довгожданий, беззвучний, божественний."
+    },
+    {
+        id: 10, type: 'single',
+        prompt: '10. Редагування НЕ ПОТРЕБУЄ словосполучення:',
+        options: ['А головна біль', 'Б цікавий шагрень', 'В високий ступінь', 'Г сильна нежить'],
+        answer: 2,
+        exp: "В — високий ступінь (іменник «ступінь» — чоловічого роду, тому редагування не потребує).\nА, Б, Г — слова «біль», «шагрень» та «нежить» є іменниками чоловічого роду в українській мові, тому правильно: головний біль, цікавий шагрень, сильний нежить."
+    },
+    {
+        id: 11, type: 'single',
+        prompt: '11. НЕПРАВИЛЬНО поєднано числівник з іменником у рядку:',
+        options: ['А троє дівчат', 'Б семеро студентів', 'В двадцятеро санчат', 'Г обидві подружки', 'Д двоє цуценят'],
+        answer: 0,
+        exp: "Збірні числівники не поєднуються з іменниками жіночого роду, тому правильно сказати: три дівчини."
+    },
+    {
+        id: 12, type: 'single',
+        prompt: '12. Синонімом до слова декоративний є слово:',
+        options: ['А побутовий', 'Б практичний', 'В функціональний', 'Г корисний', 'Д орнаментальний'],
+        answer: 4,
+        exp: "Декоративний — призначений для прикрашання; орнаментальний — який служить орнаментом."
+    },
+    {
+        id: 13, type: 'single',
+        prompt: '13. Лексичної помилки НЕМАЄ в реченні:',
+        options: [
+            'А Наступного року наша команда планує приймати участь у кількох міжнародних освітніх конференціях.',
+            'Б Сергій на протязі двох місяців готувався до складання підсумкового тестування з мови.',
+            'В Усі члени нашої організації погоджуються з цим стратегічним рішенням та готові до роботи.',
+            'Г Ми вирішили підвести підсумки виконаної роботи та скласти детальний план на майбутнє.',
+            'Д Для вирішення цього питання керівнику довелося прийняти міри вже на початку поточного тижня.'
+        ],
+        answer: 2,
+        exp: "А — приймати участь ➔ брати участь.\nБ — на протязі ➔ протягом.\nГ — підвести підсумки ➔ підбити підсумки.\nД — вирішення питання ➔ розв'язання питання, прийняти міри ➔ вжити заходів."
+    },
+    {
+        id: 14, type: 'single',
+        prompt: '14. Неправильно розставлено розділові знаки при діалозі в рядку:',
+        options: [
+            'А — Ми будемо знімати з сіткою, — вирішує режисер — воно буде красиво, нерізке наводження на фокус дасть пригніченість.',
+            'Б — Буде красивенький кадр, — каже оператор, — я не буду брати стелі.',
+            'В — Як це не будете, — спокійно зауважує Професор, — нащо ж я виробляв і вимальовував дрібниці? Можна було поставити самі стіни і навіть не фарбувати їх та не мазати.',
+            'Г — Ви мене зарізати хочете! Призначено зняти сьогодні двадцять кадрів, а ви ще й не починали? За дві години починає третя група — на станції амперажу не вистачить. Реквізиторе! Костюмере! Помреже! Давайте сюди акторів!',
+            'Д — Мистецтво, — каже Професор. І ми розходимось.'
+        ],
+        answer: 0,
+        exp: "Якщо слова автора стоять у середині репліки й після них пряма мова продовжується, то після слів автора перед другою частиною репліки ставиться кома та тире: «— вирішує режисер, — воно буде...»"
+    },
+    {
+        id: 15, type: 'single',
+        prompt: '15. Прочитайте речення (цифрою позначено попередній розділовий знак):\n<span style="font-weight: normal;">Хоч як складно було пробиратися крізь хащі, (1) мандрівники не зупинялися: (2) тільки-но заходило сонце, (3) ліс спалахував тисячами світлячків, (4) і на галявині, (5) осяяний місячним сяйвом, (6) з\'являвся старий дуб - (7) справжній велетень українського полісся.</span>\n\nНЕПРАВИЛЬНЕ обґрунтування вживання розділових знаків наведено в рядку:',
+        options: [
+            'А кома (1) — між частинами складного речення, що поєднані підрядним зв\'язком',
+            'Б двокрапка (2) — після узагальнювального слова при однорідних членах речення',
+            'В кома (3) — між частинами складного речення, що поєднані підрядним зв\'язком',
+            'Г коми (5), (6) — при відокремленому означенні',
+            'Д тире (7) — при відокремленій прикладці'
+        ],
+        answer: 1,
+        exp: "Б — НЕПРАВИЛЬНО. Двокрапка (2) ставиться між частинами безсполучникового складного речення (друга частина розкриває причину чи пояснює зміст першої), а не після узагальнювального слова."
+    },
+    {
+        id: 16, type: 'single',
+        prompt: '16. НЕПРАВИЛЬНО утворено форми ступенів порівняння прикметників у рядку:',
+        options: [
+            'А щонайцікавіший, найменш гарний, більш добрий',
+            'Б біліший, найбільш милий, найчемніший',
+            'В більш затишніший, якнайвідповідальний, менш зліший',
+            'Г щонайближчий, найбільш вимогливий, розумніший',
+            'Д найменш корисний, найсмачніший, більш гарячий'
+        ],
+        answer: 2,
+        exp: "Правильно: більш затишний, менш злий. Не можна змішувати просту і складену форми (більш + затишніший — помилка)."
+    },
+    {
+        id: 17, type: 'single',
+        prompt: '17. Редагування потребує речення:',
+        options: [
+            'А Ознайомившись із програмою підготовки до іспиту, студент склав чіткий розклад щоденних занять.',
+            'Б Ми не лише обговорили деталі майбутнього проєкту, а й розробили покроковий план дій.',
+            'В Прочитавши нову книжку, дівчина вирішила поділитися враженнями в соціальних мережах.',
+            'Г На нараді лектор наголосив на важливості постійного саморозвитку та системного читання.',
+            'Д Готуючись до складного уроку, учителю знадобилися додаткові методичні матеріали та презентація.'
+        ],
+        answer: 4,
+        exp: "У реченні з дієприслівниковим зворотом підмет має виконувати обоє дій. Тут підмет «матеріали та презентація» знадобилися, але вони не «готувалися до уроку». Правильно: Готуючись до складного уроку, учитель використав..."
+    },
+    {
+        id: 18, type: 'single',
+        prompt: '18. Правильну відповідь на питання «Котра година?» наведено в рядку:',
+        options: ['А половина дев’ятої', 'Б за чверть восьма', 'В без десяти хвилин перша', 'Г пів десятої', 'Д одинадцять десять'],
+        answer: 1,
+        exp: "Правильні варіанти: пів на дев’яту, за десять перша, пів на десяту, одинадцята десять."
+    },
+    {
+        id: 19, type: 'single',
+        prompt: '19. Правильно утворено форму наказового способу дієслова в рядку:',
+        options: ['А давай напишемо', 'Б ходімте', 'В пішли', 'Г намалюєте', 'Д змайструймо'],
+        answer: 4,
+        exp: "Нормативні форми: напишімо, ходімо, намалюймо, змайструймо."
+    },
+    {
+        id: 20, type: 'single',
+        prompt: '20. НЕПРАВИЛЬНО утворено форму кличного відмінка у варіанті:',
+        options: [
+            'А Тетяно Геннадіївно, хлопче, пані Олено',
+            'Б Денисе Романовиче, вихователю, Микито',
+            'В пані Маріє, Назаре, Ігорю Миколайовичу',
+            'Г Катерино, соколе, Богдане Петровичу',
+            'Д друже, Євгене Артемовичу, пане майоре'
+        ],
+        answer: 1,
+        exp: "Правильно: Денисе Романовичу."
+    },
+    {
+        id: 21, type: 'single',
+        prompt: '21. Первісний текст буде відновлено, якщо речення розташувати в послідовності, запропонованій у рядку:\n<span style="font-weight: normal;">' + microText + '</span>',
+        options: ['А ◇ △ ○ □ ▽', 'Б △ ◇ ○ □ ▽', 'В ○ ▽ ◇ □ △', 'Δ △ ○ □ ◇ ▽', 'Д △ ○ ◇ □ ▽'],
+        answer: 2,
+        exp: "Послідовність В (○ ▽ ◇ □ △):\n1. ○ — Вводить загальну тезу про натхнення.\n2. ▽ — Розвиває думку займенником «воно».\n3. ◇ — Протиставлення через сполучник «проте».\n4. □ — Пояснює значення систематичної праці.\n5. △ — Висновок зі словами «тому»."
+    },
+    {
+        id: 22, type: 'single',
+        prompt: '22. Просте речення з однорідними членами є у варіанті:\n<span style="font-weight: normal;">' + microText + '</span>',
+        options: ['А △', 'Б ○', 'В ◇', 'Г □', 'Д ▽'],
+        answer: 4,
+        exp: "У реченні ▽ однорідні присудки: «дає», «забарвлює»."
+    },
+    {
+        id: 23, type: 'single',
+        prompt: '23. Пунктуаційну помилку допущено у варіанті:\n<span style="font-weight: normal;">' + microText + '</span>',
+        options: ['А ◇', 'Б ○', 'В △', 'Г □', 'Д ▽'],
+        answer: 0,
+        exp: "У реченні ◇ кома після слова «проте» на початку речення не потрібна."
+    },
+    {
+        id: 24, type: 'single',
+        prompt: '<b>24. У ролі підмета вжито виділене слово:</b>',
+        options: ['А дисципліна', 'Б приплив', 'В завдання', 'Г праці', 'Д імпульс'],
+        answer: 0,
+        exp: "У реченні ◇ «дисципліна» відповідає на питання Хто? Що? і є підметом (дисципліна формується)."
+    },
+    {
+        id: 25, type: 'single',
+        prompt: '<b>25. Вставне слово є у варіанті:</b>',
+        options: ['А △', 'Б ○', 'В ◇', 'Г □', 'Д ▽'],
+        answer: 0,
+        exp: "У реченні △ вставне слово «очевидно»."
+    },
+    {
+        id: 26, type: 'matching',
+        prompt: '26. Доберіть до кожного речення (1–4), у якому зроблено пропуск, відповідний за значенням фразеологізм (А – Д).',
+        left: [
+            '1 Моя бабуся чудово знається на лікувальних травах, тож у цьому питанні вона (…).',
+            '2 Не варто вірити обіцянкам нового знайомого, бо він явно намагається (…).',
+            '3 Художник годинами блукав містом і (…), шукаючи натхнення.',
+            '4 Коли перед усім класом оголосили про її необачний вчинок, дівчині залишалося лише (…).'
+        ],
+        right: ['А водити за ніс', 'Б варити воду', 'В пекти раків', 'Г собаку з’їсти', 'Д ловити ґав'],
+        answer: { 0: 3, 1: 0, 2: 4, 3: 2 },
+        exp: "1 — Г (собаку з'їсти) — мати великий досвід.\n2 — А (водити за ніс) — дурити.\n3 — Д (ловити ґав) — марнувати час, блукати без діла.\n4 — В (пекти раків) — червоніти від сорому."
+    },
+    {
+        id: 27, type: 'matching',
+        prompt: '27. З’ясуйте, якими частинами мови (А – Д) є виділені слова в реченні (1–4).\n<span style="font-weight: normal;">Старий Омелько був дуже богомільний, ходив (1)до церкви (2)щонеділі не тільки на службу, а (3)навіть на вечерню, говів два (4)рази на рік, горнувся до духовенства, любив молитись і постити.</span>',
+        left: [
+            '1 (1) до',
+            '2 (2) щонеділі',
+            '3 (3) навіть',
+            '4 (4) рази'
+        ],
+        right: ['А частка', 'Б прийменник', 'В прислівник', 'Г іменник', 'Д числівник'],
+        answer: { 0: 1, 1: 2, 2: 0, 3: 3 },
+        exp: "1 (до) — Б прийменник\n2 (щонеділі) — В прислівник\n3 (навіть) — А частка\n4 (рази) — Г іменник"
+    },
+    {
+        id: 28, type: 'matching',
+        prompt: '28. До іншомовного слова (1–4) доберіть український відповідник (А – Д).',
+        left: ['1 азарт', '2 директива', '3 ембарго', '4 індульгенція'],
+        right: ['А розпорядження', 'Б помилування', 'В завзяття', 'Г промисловість', 'Д заборона'],
+        answer: { 0: 2, 1: 0, 2: 4, 3: 1 },
+        exp: "1 азарт ➔ В завзяття\n2 директива ➔ А розпорядження\n3 ембарго ➔ Д заборона\n4 індульгенція ➔ Б помилування"
+    },
+    {
+        id: 29, type: 'matching',
+        prompt: '29. Поєднайте виділені фрагменти простих (1-4) і складних (А-Д) речень за подібністю синтаксичного значення. Зразок такого поєднання показано на зображенні.<br><br><div style="text-align: center; margin: 10px 0;"><img src="https://lh3.googleusercontent.com/d/1fP2M1s_p5O9LZ6706OkOqD5CFlnn36Ym" alt="Зразок" style="max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 8px;"></div><br>Складне речення<br>А <span class="wavy-underline" style="font-weight: normal;">Якщо експерти будуть дотримуватися класичних норм,</span> ми продовжимо співпрацю.<br>Б Реставратор використовує сучасні матеріали, <span class="wavy-underline" style="font-weight: normal;">щоб продовжити життя старовинній споруді.</span><br>В <span class="wavy-underline" style="font-weight: normal;">Зазвичай</span> аналітик створює короткі звіти, а потім відстежує, скільки колег перегляне його матеріали.<br>Г Команда завершила підготовчі роботи, <span class="wavy-underline" style="font-weight: normal;">хоча погодні умови були не дуже сприятливі.</span><br>Д Менеджер детально розповів про завдання, <span class="wavy-underline" style="font-weight: normal;">яке треба виконати найближчим часом.</span>',
+        left: [
+            '1 Архітектори розробили новий проєкт для двох фахівців – <span class="wavy-underline" style="font-weight: normal;">урбаніста та реставратора.</span>',
+            '2 Молодший спеціаліст щоденно вивчає архівні документи <span class="wavy-underline" style="font-weight: normal;">задля збереження історичної спадщини.</span>',
+            '3 Дослідник <span class="wavy-underline" style="font-weight: normal;">щовечора</span> занотовує результати спостережень у спеціальний щоденник.',
+            '4 Автори проєкту радять не розпочинати будівництво, <span class="wavy-underline" style="font-weight: normal;">не погодивши деталі з місцевою громадою.</span>'
+        ],
+        right: [
+            'А <span class="wavy-underline" style="font-weight: normal;">Якщо експерти будуть дотримуватися класичних норм,</span> ми продовжимо співпрацю.',
+            'Б Реставратор використовує сучасні матеріали, <span class="wavy-underline" style="font-weight: normal;">щоб продовжити життя старовинній споруді.</span>',
+            'В <span class="wavy-underline" style="font-weight: normal;">Зазвичай</span> аналітик створює короткі звіти, а потім відстежує, скільки колег перегляне його матеріали.',
+            'Г Команда завершила підготовчі роботи, <span class="wavy-underline" style="font-weight: normal;">хоча погодні умови були не дуже сприятливі.</span>',
+            'Д Менеджер детально розповів про завдання, <span class="wavy-underline" style="font-weight: normal;">яке треба виконати найближчим часом.</span>'
+        ],
+        answer: { 0: 4, 1: 1, 2: 2, 3: 0 },
+        exp: "1 – Д (проєкт для фахівців – яких? / розповів про завдання – яке?)\n2 – Б (вивчає документи – для чого? / використовує матеріали – навіщо?)\n3 – В (щовечора – коли? / зазвичай – коли?)\n4 – А (не розпочинати – за якої умови? / якщо будуть дотримуватися – умова)"
+    },
+    {
+        id: 30, type: 'matching',
+        prompt: '30. З’ясуйте тип (1–4) речення (А – Д) (розділові знаки пропущено).',
+        left: [
+            '1 Осінній парк, залитий ранковим сонцем, здавався особливо тихим і затишним.',
+            '2 Дослідники давно вивчають поведінку дельфінів, проте остаточно пояснити деякі їхні здібності науковці ще не змогли.',
+            '3 Коли над лісом зійшов місяць, стежка стала добре помітною, хоча ще годину тому її майже не було видно.',
+            '4 Я відчинив вікно – до кімнати увірвався прохолодний вітер, дерева зашуміли, і стало зрозуміло: наближається гроза.'
+        ],
+        right: [
+            'А складносурядне',
+            'Б складнопідрядне',
+            'В складне безсполучникове',
+            'Г просте ускладнене',
+            'Д з різними видами зв’язку'
+        ],
+        answer: { 0: 3, 1: 0, 2: 1, 3: 4 },
+        exp: "1 – Г (просте ускладнене відокремленим означенням)\n2 – А (складносурядне зі сполучником проте)\n3 – Б (складнопідрядне з кількома підрядними)\n4 – Д (складне з різними видами зв'язку: безсполучниковим та сурядним)"
+    }
+];
+
+const conversionTable = {
+    0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0,
+    8: 100, 9: 105, 10: 110, 11: 120, 12: 125, 13: 130, 14: 134,
+    15: 136, 16: 138, 17: 140, 18: 142, 19: 143, 20: 144, 21: 145,
+    22: 146, 23: 148, 24: 149, 25: 150, 26: 152, 27: 154, 28: 156,
+    29: 157, 30: 159, 31: 160, 32: 162, 33: 163, 34: 165, 35: 167,
+    36: 170, 37: 172, 38: 175, 39: 177, 40: 180, 41: 183, 42: 186,
+    43: 191, 44: 195, 45: 200
+};
+
+let studentName = "";
+let warningsCount = 0;
+let timerInterval = null;
+let timeLeft = 3600;
+
+function startQuiz() {
+    const input = document.getElementById('student-name');
+    if (!input.value.trim()) {
+        alert("Будь ласка, введіть ПІБ учня!");
+        return;
+    }
+    studentName = input.value.trim();
+    document.getElementById('user-display-name').innerText = studentName;
+    document.getElementById('start-modal').classList.add('hidden');
+    document.getElementById('quiz-content').classList.remove('hidden');
+
+    renderQuiz();
+    initAntiCheat();
+    startTimer();
+}
+
+function initAntiCheat() {
+    window.addEventListener('blur', recordDistraction);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) recordDistraction();
+    });
+}
+
+function recordDistraction() {
+    if (!document.getElementById('quiz-content').classList.contains('hidden')) {
+        warningsCount++;
+        document.getElementById('warning-display').innerText = `Виходів із вкладки: ${warningsCount}`;
+    }
+}
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        const m = Math.floor(timeLeft / 60);
+        const s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            finishQuiz();
+        }
+        timeLeft--;
+    }, 1000);
+}
+
+function renderQuiz() {
+    const container = document.getElementById('questions-container');
+    const navGrid = document.getElementById('nav-grid');
+    container.innerHTML = '';
+    navGrid.innerHTML = '';
+
+    for (let i = 0; i < 30; i++) {
+        const navBtn = document.createElement('div');
+        navBtn.className = 'nav-btn';
+        navBtn.innerText = i + 1;
+        navBtn.id = `nav-${i}`;
+        navBtn.onclick = () => scrollToQuestion(i);
+        navGrid.appendChild(navBtn);
+    }
+
+    quizData.forEach((q, index) => {
+        const item = document.createElement('div');
+        item.className = 'question-item';
+        item.id = `q-card-${index}`;
+
+        let html = `<div class="q-prompt">${q.prompt}</div>`;
+
+        if (q.type === 'single') {
+            html += `<ul class="options-list">`;
+            q.options.forEach((opt, optIdx) => {
+                html += `
+                    <li class="option-item">
+                        <label class="option-label">
+                            <input type="radio" name="q-${index}" value="${optIdx}" onchange="markAnswered(${index})">
+                            <span>${opt}</span>
+                        </label>
+                    </li>
+                `;
+            });
+            html += `</ul>`;
+        } else if (q.type === 'matching') {
+            html += `<div class="matching-grid">`;
+            q.left.forEach((leftText, lIdx) => {
+                html += `
+                    <div class="matching-row">
+                        <span>${leftText}</span>
+                        <select name="q-${index}-${lIdx}" onchange="markAnswered(${index})">
+                            <option value="">-- Виберіть --</option>
+                            ${q.right.map((rText, rIdx) => `<option value="${rIdx}">${rText}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        item.innerHTML = html;
+        container.appendChild(item);
+    });
+}
+
+function scrollToQuestion(index) {
+    const target = document.getElementById(`q-card-${index}`);
+    if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function markAnswered(index) {
+    const navBtn = document.getElementById(`nav-${index}`);
+    const q = quizData[index];
+    if (!navBtn || !q) return;
+
+    let isAnswered = false;
+    if (q.type === 'single') {
+        isAnswered = !!document.querySelector(`input[name="q-${index}"]:checked`);
+    } else if (q.type === 'matching') {
+        const selects = document.querySelectorAll(`select[name^="q-${index}-"]`);
+        isAnswered = Array.from(selects).some(s => s.value !== "");
+    }
+
+    if (isAnswered) {
+        navBtn.className = 'nav-btn answered';
+    } else {
+        navBtn.className = 'nav-btn skipped';
+    }
+}
+
+function finishQuiz() {
+    clearInterval(timerInterval);
+    let rawScore = 0;
+
+    quizData.forEach((q, index) => {
+        if (q.type === 'single') {
+            const selected = document.querySelector(`input[name="q-${index}"]:checked`);
+            if (selected && parseInt(selected.value) === q.answer) {
+                rawScore += 1;
+            }
+        } else if (q.type === 'matching') {
+            q.left.forEach((_, lIdx) => {
+                const select = document.querySelector(`select[name="q-${index}-${lIdx}"]`);
+                if (select && select.value !== "" && parseInt(select.value) === q.answer[lIdx]) {
+                    rawScore += 1;
+                }
+            });
+        }
+    });
+
+    const scaledScore = conversionTable[rawScore] || 100;
+
+    document.getElementById('res-raw').innerText = `${rawScore} / 45`;
+    document.getElementById('res-scaled').innerText = scaledScore;
+    document.getElementById('res-distractions').innerText = warningsCount;
+    document.getElementById('score-badge').innerText = `Тестовий бал: ${rawScore} / 45`;
+
+    const reviewContainer = document.getElementById('review-container');
+    reviewContainer.innerHTML = '';
+    const formContent = document.getElementById('questions-container').cloneNode(true);
+    reviewContainer.appendChild(formContent);
+
+    quizData.forEach((q, index) => {
+        if (q.type === 'single') {
+            const selected = document.querySelector(`input[name="q-${index}"]:checked`);
+            const selectedVal = selected ? parseInt(selected.value) : null;
+            const labels = reviewContainer.querySelectorAll(`#q-card-${index} .option-label`);
+
+            labels.forEach((label, optIdx) => {
+                if (optIdx === q.answer) {
+                    label.classList.add('correct-answer-highlight');
+                } else if (selectedVal === optIdx) {
+                    label.classList.add('incorrect-answer-highlight');
+                }
+            });
+        } else if (q.type === 'matching') {
+            const rows = reviewContainer.querySelectorAll(`#q-card-${index} .matching-row`);
+            rows.forEach((row, lIdx) => {
+                const select = document.querySelector(`select[name="q-${index}-${lIdx}"]`);
+                const selectedVal = select && select.value !== "" ? parseInt(select.value) : null;
+                if (selectedVal === q.answer[lIdx]) {
+                    row.classList.add('correct-answer-highlight');
+                } else {
+                    row.classList.add('incorrect-answer-highlight');
+                }
+            });
+        }
+
+        if (q.exp) {
+            const expDiv = document.createElement('div');
+            expDiv.className = 'explanation';
+            expDiv.style.display = 'block';
+            expDiv.innerText = `Пояснення: ${q.exp}`;
+            reviewContainer.querySelector(`#q-card-${index}`).appendChild(expDiv);
+        }
+    });
+
+    document.getElementById('quiz-content').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+}
+
+function downloadPDF() {
+    const element = document.getElementById('result-screen');
+    const opt = {
+        margin:       10,
+        filename:     `НМТ_Результат_${studentName.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+}
+</script>
+
+</body>
+</html>
